@@ -1,0 +1,157 @@
+name: CI/CD Staged Release
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/beta'
+      - 'release/rc'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'release/beta'
+      - 'release/rc'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_PATH: './Zentient.Expressions.csproj'
+  TEST_PROJECT_PATH: './tests/Zentient.Expressions.Tests/Zentient.Expressions.Tests.csproj'
+
+jobs:
+  detect-release-stage:
+    runs-on: ubuntu-latest
+    outputs:
+      stage: ${{ steps.detect.outputs.stage }}
+      version-suffix: ${{ steps.detect.outputs.version-suffix }}
+      should-publish: ${{ steps.detect.outputs.should-publish }}
+    steps:
+      - name: Detect Release Stage
+        id: detect
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "stage=stable" >> $GITHUB_OUTPUT
+            echo "version-suffix=" >> $GITHUB_OUTPUT
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/release/rc" ]]; then
+            echo "stage=rc" >> $GITHUB_OUTPUT
+            echo "version-suffix=rc.${{ github.run_number }}" >> $GITHUB_OUTPUT
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/release/beta" ]]; then
+            echo "stage=beta" >> $GITHUB_OUTPUT
+            echo "version-suffix=beta.${{ github.run_number }}" >> $GITHUB_OUTPUT
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "stage=alfa" >> $GITHUB_OUTPUT
+            echo "version-suffix=alfa.${{ github.run_number }}" >> $GITHUB_OUTPUT
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "stage=none" >> $GITHUB_OUTPUT
+            echo "version-suffix=" >> $GITHUB_OUTPUT
+            echo "should-publish=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    needs: detect-release-stage
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - name: Build
+        run: |
+          if [[ "${{ needs.detect-release-stage.outputs.version-suffix }}" != "" ]]; then
+            dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore --version-suffix ${{ needs.detect-release-stage.outputs.version-suffix }}
+          else
+            dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
+          fi
+
+      - name: Test
+        run: dotnet test ${{ env.TEST_PROJECT_PATH }} --configuration Release --no-build --verbosity normal
+
+      - name: Pack NuGet package
+        if: needs.detect-release-stage.outputs.should-publish == 'true'
+        run: |
+          if [[ "${{ needs.detect-release-stage.outputs.version-suffix }}" != "" ]]; then
+            dotnet pack ${{ env.PROJECT_PATH }} --configuration Release --no-build --output ./artifacts --version-suffix ${{ needs.detect-release-stage.outputs.version-suffix }}
+          else
+            dotnet pack ${{ env.PROJECT_PATH }} --configuration Release --no-build --output ./artifacts
+          fi
+
+      - name: Upload package artifacts
+        if: needs.detect-release-stage.outputs.should-publish == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages-${{ needs.detect-release-stage.outputs.stage }}
+          path: ./artifacts/*.nupkg
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [detect-release-stage, build-and-test]
+    if: needs.detect-release-stage.outputs.should-publish == 'true' && github.event_name == 'push'
+    environment: ${{ needs.detect-release-stage.outputs.stage }}
+    steps:
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-packages-${{ needs.detect-release-stage.outputs.stage }}
+          path: ./artifacts
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish to NuGet (Stable)
+        if: needs.detect-release-stage.outputs.stage == 'stable'
+        run: |
+          dotnet nuget push "./artifacts/*.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Publish to NuGet (Pre-release)
+        if: needs.detect-release-stage.outputs.stage != 'stable'
+        run: |
+          dotnet nuget push "./artifacts/*.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [detect-release-stage, publish]
+    if: needs.detect-release-stage.outputs.stage == 'stable' && github.ref_type == 'tag'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            ## Changes in this Release
+            
+            This is a stable release of Zentient.Expressions.
+            
+            **Release Stage:** ${{ needs.detect-release-stage.outputs.stage }}
+            **Version:** ${{ github.ref_name }}
+            
+            Please refer to the commit history for detailed changes.
+          draft: false
+          prerelease: false

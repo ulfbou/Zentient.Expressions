@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Zentient.Expressions</PackageId>
+    <Authors>Zentient</Authors>
+    <Description>A unified, type-safe, and extensible library for parsing, evaluating, and transforming expressions.</Description>
+    <PackageTags>expressions;parser;evaluator;ast;zentient</PackageTags>
+    <RepositoryUrl>https://github.com/ulfbou/Zentient.Expressions</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="tests/**" />
+  </ItemGroup>
+
+</Project>
