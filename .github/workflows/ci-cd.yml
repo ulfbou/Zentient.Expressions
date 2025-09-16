@@ -173,7 +173,7 @@ jobs:
       - name: Pack solution (include symbols and sources)
         run: |
           set -euo pipefail
-          ver=$(cat version.txt)
+          ver=$(tr -d '\r\n' < version.txt)
           echo "Packing with PackageVersion=$ver"
           dotnet pack ${{ env.SOLUTION }} -c Release -p:PackageVersion="$ver" --include-symbols --include-source -o artifacts || { echo "Pack failed"; exit 1; }
 
