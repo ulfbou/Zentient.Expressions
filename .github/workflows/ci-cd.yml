@@ -132,6 +132,13 @@ jobs:
           if [ -z "$ver" ]; then ver=${{ steps.gitversion.outputs.SemVer }}; fi
           echo "$ver" | tr -d '\r' > version.txt
           echo "Written version.txt:"; cat version.txt
+          echo "---- debug: repo state ----"
+          echo "GITHUB_REF=${GITHUB_REF}"
+          echo "GITHUB_SHA=${GITHUB_SHA}"
+          git --no-pager log -1 --pretty=oneline || true
+          echo "Listing src/:"; ls -la src || true
+          echo "---- debug: dotnet --info ----"
+          dotnet --info || true
 
       - name: Verify version consistency (optional)
         run: |
@@ -153,11 +160,13 @@ jobs:
         run: |
           set -euo pipefail
           echo "Building solution before packing to ensure artifacts exist"
+          dotnet --info
           dotnet build ${{ env.SOLUTION }} -c Release
 
       - name: Pack projects (use GitVersion-generated version)
         run: |
           set -euo pipefail
+          set -x
           # Normalize version to a valid SemVer token (strip noise/concatenation)
           ver_raw=$(tr -d '\r\n' < version.txt)
           echo "Raw version: '$ver_raw'"
@@ -177,6 +186,17 @@ jobs:
           fi
           echo "Derived VersionPrefix: $base_ver"
 
+          echo "---- debug: environment ----"
+          env | sort
+          echo "---- debug: git status ----"
+          git status --porcelain || true
+          echo "---- debug: list top-level files ----"
+          ls -la || true
+          echo "---- debug: list src files ----"
+          ls -la src || true
+          echo "---- debug: version.txt contents ----"
+          cat version.txt || true
+
           mkdir -p artifacts
           failed=0
           for proj in $(git ls-files 'src/**/*.csproj' 'src/*.csproj'); do
@@ -190,7 +210,13 @@ jobs:
           if [ "$failed" -ne 0 ]; then
             echo "One or more projects failed to pack"; exit 1
           fi
+
           echo "Packed artifacts:"; ls -la artifacts || true
+          echo "---- debug: inspect nuspecs ----"
+          for f in artifacts/*.nupkg; do
+            echo "-- $f --"
+            unzip -p "$f" *.nuspec || true
+          done || true
 
       - name: Upload NuGet packages as artifacts
         uses: actions/upload-artifact@v4
