@@ -211,6 +211,14 @@ jobs:
             echo "One or more projects failed to pack"; exit 1
           fi
 
+          # Copy version metadata into artifacts so downstream jobs can read it
+          if [ -f version.txt ]; then
+            cp version.txt artifacts/version.txt || true
+            echo "Copied version.txt to artifacts/version.txt"
+          else
+            echo "version.txt not found; cannot copy"; exit 1
+          fi
+
           echo "Packed artifacts:"; ls -la artifacts || true
           echo "---- debug: inspect nuspecs ----"
           for f in artifacts/*.nupkg; do
