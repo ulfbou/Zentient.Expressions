@@ -170,12 +170,19 @@ jobs:
           echo "Using normalized version: '$ver'"
           echo "$ver" > version.txt
 
+          # Derive VersionPrefix as the base X.Y.Z to satisfy Directory.Core.targets
+          base_ver=$(echo "$ver" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || true)
+          if [ -z "$base_ver" ]; then
+            echo "Failed to extract base version from $ver"; exit 1
+          fi
+          echo "Derived VersionPrefix: $base_ver"
+
           mkdir -p artifacts
           failed=0
           for proj in $(git ls-files 'src/**/*.csproj' 'src/*.csproj'); do
             if grep -q '<IsPackable>true</IsPackable>' "$proj"; then
-              echo "Packing project: $proj with Version: '$ver'."
-              dotnet pack "$proj" -c Release -p:Version="$ver" -p:PackageVersion="$ver" -p:VersionPrefix= --include-symbols --include-source -o artifacts || { echo "Pack failed for $proj"; failed=1; }
+              echo "Packing project: $proj with Version: '$ver' and VersionPrefix: '$base_ver'."
+              dotnet pack "$proj" -c Release -p:Version="$ver" -p:PackageVersion="$ver" -p:VersionPrefix="$base_ver" --include-symbols --include-source -o artifacts || { echo "Pack failed for $proj"; failed=1; }
             else
               echo "Skipping non-packable project: $proj"
             fi
