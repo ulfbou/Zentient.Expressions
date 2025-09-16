@@ -12,8 +12,11 @@
     <Description>Provisional abstractions for Zentient.Expressions. Will be consolidated into Zentient.Abstractions in a future release.</Description>
     <PackageDescription>Provisional abstractions for Zentient.Expressions. Will be consolidated into Zentient.Abstractions in a future release.</PackageDescription>
     <PackageTags>zentient;expressions;abstractions;alfa</PackageTags>
-    <!-- README.md is at repository root; use path relative to project directory so pack can include it -->
-    <PackageReadmeFile>../../README.md</PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
 </Project>
