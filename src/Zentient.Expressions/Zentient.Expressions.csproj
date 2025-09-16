@@ -8,7 +8,6 @@
     <!-- Alfa release packaging metadata (project-specific) -->
     <IsPackable>true</IsPackable>
     <VersionPrefix>0.1.0</VersionPrefix>
-    <PackageVersion>0.1.0</PackageVersion>
     <PackageId>Zentient.Expressions</PackageId>
     <Description>Zentient.Expressions - Alpha release (alfa). Core expression abstractions, parser and evaluator.</Description>
     <PackageDescription>Zentient.Expressions - Alpha release (alfa). Core expression abstractions, parser and evaluator.</PackageDescription>
