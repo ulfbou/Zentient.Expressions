@@ -12,9 +12,14 @@
     <Description>Zentient.Expressions - Alpha release (alfa). Core expression abstractions, parser and evaluator.</Description>
     <PackageDescription>Zentient.Expressions - Alpha release (alfa). Core expression abstractions, parser and evaluator.</PackageDescription>
     <PackageTags>zentient;expressions;alfa</PackageTags>
-    <!-- README.md is at repository root; use path relative to project directory so pack can include it -->
-    <PackageReadmeFile>../../README.md</PackageReadmeFile>
+    <!-- Use README.md at package root as the readme file -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Include repository README at package root so NuGet pack finds it -->
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Zentient.Abstractions.Expressions\Zentient.Abstractions.Expressions.csproj" />
