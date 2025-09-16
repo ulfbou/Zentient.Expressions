@@ -134,6 +134,15 @@ jobs:
           # Fallback to SemVer if NuGetVersionV2 not available
           if [ -z "$ver" ]; then ver=${{ steps.gitversion.outputs.SemVer }}; fi
           ver=$(printf "%s" "$ver" | tr -d '\r')
+
+          # If this is a release/* branch, require a prerelease label (no pure X.Y.Z allowed)
+          if [[ "${{ github.ref }}" == refs/heads/release/* ]]; then
+            if echo "$ver" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "ERROR: Computed version for release branch is a full release ($ver). Aborting to avoid publishing a full release from a prerelease branch." >&2
+              exit 1
+            fi
+          fi
+
           echo "version=$ver" >> $GITHUB_OUTPUT
           echo "$ver" > version.txt
           echo "Written version.txt:"; cat version.txt
@@ -185,7 +194,6 @@ jobs:
           echo "$ver" > version.txt
 
           # Derive VersionPrefix as the base X.Y.Z to satisfy Directory.Core.targets
-          # Use a strict extraction and fail early with a clear message if it cannot be extracted
           base_ver=$(echo "$ver" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || true)
           if [ -z "$base_ver" ]; then
             echo "ERROR: Failed to extract base version (VersionPrefix) from computed version: '$ver'" >&2
@@ -232,7 +240,20 @@ jobs:
           for f in artifacts/*.nupkg; do
             echo "-- $f --"
             unzip -p "$f" *.nuspec || true
+
+            # Validate that package contains both net8.0 and net9.0 outputs
+            echo "Validating frameworks in $f"
+            if unzip -l "$f" | grep -q "lib/net8.0/" && unzip -l "$f" | grep -q "lib/net9.0/"; then
+              echo "Package $f contains net8.0 and net9.0"
+            else
+              echo "ERROR: Package $f is missing net8.0 or net9.0 outputs" >&2
+              failed=1
+            fi
           done || true
+
+          if [ "$failed" -ne 0 ]; then
+            echo "One or more package validation checks failed"; exit 1
+          fi
 
       - name: Upload NuGet packages as artifacts
         uses: actions/upload-artifact@v4
