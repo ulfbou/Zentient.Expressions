@@ -1,0 +1,112 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11010.61 d18.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zentient.Expressions", "src\Zentient.Expressions\Zentient.Expressions.csproj", "{CB58A6F4-100B-4C73-A645-3A5134FD5329}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zentient.Expressions.Tests", "tests\Zentient.Expressions.Tests.csproj", "{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zentient.Abstractions.Expressions", "src\Zentient.Abstractions.Expressions\Zentient.Abstractions.Expressions.csproj", "{9C4802F4-D74B-45E1-8F76-16A0419C248B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{5D48882C-2BF0-488A-97B8-2992C1B1E603}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Analyzer.props = Directory.Analyzer.props
+		Directory.Analyzer.targets = Directory.Analyzer.targets
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
+		Directory.Core.props = Directory.Core.props
+		Directory.Core.targets = Directory.Core.targets
+		Directory.Documentation.props = Directory.Documentation.props
+		Directory.Documentation.targets = Directory.Documentation.targets
+		Directory.Pack.props = Directory.Pack.props
+		Directory.Pack.targets = Directory.Pack.targets
+		Directory.Performance.props = Directory.Performance.props
+		Directory.Performance.targets = Directory.Performance.targets
+		Directory.Quality.props = Directory.Quality.props
+		Directory.Quality.targets = Directory.Quality.targets
+		Directory.Security.props = Directory.Security.props
+		Directory.Security.targets = Directory.Security.targets
+		Directory.Sign.props = Directory.Sign.props
+		Directory.Sign.targets = Directory.Sign.targets
+		Directory.Test.props = Directory.Test.props
+		Directory.Test.targets = Directory.Test.targets
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub Actions", "GitHub Actions", "{800559FA-B46F-4807-ADDB-7EC110D8425F}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci-cd.yml = .github\workflows\ci-cd.yml
+		.github\workflows\docfx.yml = .github\workflows\docfx.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{86FBC024-20EC-4290-9525-BA466ADA49AE}"
+	ProjectSection(SolutionItems) = preProject
+		CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Debug|x64.Build.0 = Debug|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Debug|x86.Build.0 = Debug|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Release|x64.ActiveCfg = Release|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Release|x64.Build.0 = Release|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Release|x86.ActiveCfg = Release|Any CPU
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329}.Release|x86.Build.0 = Release|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Debug|x64.Build.0 = Debug|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Debug|x86.Build.0 = Debug|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Release|x64.ActiveCfg = Release|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Release|x64.Build.0 = Release|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Release|x86.ActiveCfg = Release|Any CPU
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8}.Release|x86.Build.0 = Release|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Debug|x64.Build.0 = Debug|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Debug|x86.Build.0 = Debug|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Release|x64.ActiveCfg = Release|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Release|x64.Build.0 = Release|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Release|x86.ActiveCfg = Release|Any CPU
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CB58A6F4-100B-4C73-A645-3A5134FD5329} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{2ACF9D89-3898-4DF9-884A-7B6986BD2AA8} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{9C4802F4-D74B-45E1-8F76-16A0419C248B} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B8237AD3-EECF-474E-B33C-A67E31F2E95B}
+	EndGlobalSection
+EndGlobal
