@@ -93,6 +93,8 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      version: ${{ steps.set_version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -122,6 +124,7 @@ jobs:
         uses: GitTools/actions/gitversion/execute@v0.9.14
 
       - name: Persist computed version
+        id: set_version
         run: |
           set -euo pipefail
           echo "GitVersion outputs:"
@@ -130,7 +133,9 @@ jobs:
           ver=${{ steps.gitversion.outputs.NuGetVersionV2 }}
           # Fallback to SemVer if NuGetVersionV2 not available
           if [ -z "$ver" ]; then ver=${{ steps.gitversion.outputs.SemVer }}; fi
-          echo "$ver" | tr -d '\r' > version.txt
+          ver=$(printf "%s" "$ver" | tr -d '\r')
+          echo "version=$ver" >> $GITHUB_OUTPUT
+          echo "$ver" > version.txt
           echo "Written version.txt:"; cat version.txt
           echo "---- debug: repo state ----"
           echo "GITHUB_REF=${GITHUB_REF}"
@@ -143,7 +148,7 @@ jobs:
       - name: Verify version consistency (optional)
         run: |
           set -euo pipefail
-          ver=$(cat version.txt)
+          ver=${{ steps.set_version.outputs.version }}
           echo "Using version: $ver"
           # If this run was triggered by a tag, ensure tag version matches GitVersion
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
@@ -201,6 +206,8 @@ jobs:
           failed=0
           for proj in $(git ls-files 'src/**/*.csproj' 'src/*.csproj'); do
             if grep -q '<IsPackable>true</IsPackable>' "$proj"; then
+              echo "Packing project: $proj with Version: '$ver'."
+              dotnet pack "$proj" -c Release -p:Version="$ver" -p:PackageVersion="$ver" -p:VersionPrefix= --include-symbols --include-source -o artifacts || { echo "Pack failed for $proj"; failed=1; }
               echo "Packing project: $proj with Version: '$ver' and VersionPrefix: '$base_ver'."
               dotnet pack "$proj" -c Release -p:Version="$ver" -p:PackageVersion="$ver" -p:VersionPrefix="$base_ver" --include-symbols --include-source -o artifacts || { echo "Pack failed for $proj"; failed=1; }
             else
@@ -363,7 +370,7 @@ jobs:
       - name: Determine version and tag
         run: |
           set -euo pipefail
-          ver=$(cat version.txt)
+          ver="${{ needs.pack.outputs.version }}"
           tag="v${ver}"
           echo "Version=$ver" > release_meta.txt
           echo "Tag=$tag" >> release_meta.txt
