@@ -180,7 +180,7 @@ jobs:
           failed=0
           for proj in $(git ls-files 'src/**/*.csproj' 'src/*.csproj'); do
             if grep -q '<IsPackable>true</IsPackable>' "$proj"; then
-              echo "Packing project: $proj"
+              echo "Packing project: $proj with Version: '$ver'."
               dotnet pack "$proj" -c Release -p:PackageVersion="$ver" --include-symbols --include-source -o artifacts || { echo "Pack failed for $proj"; failed=1; }
             else
               echo "Skipping non-packable project: $proj"
