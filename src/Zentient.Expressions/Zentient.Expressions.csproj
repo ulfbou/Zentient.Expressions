@@ -12,7 +12,8 @@
     <Description>Zentient.Expressions - Alpha release (alfa). Core expression abstractions, parser and evaluator.</Description>
     <PackageDescription>Zentient.Expressions - Alpha release (alfa). Core expression abstractions, parser and evaluator.</PackageDescription>
     <PackageTags>zentient;expressions;alfa</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- README.md is at repository root; use path relative to project directory so pack can include it -->
+    <PackageReadmeFile>../../README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
