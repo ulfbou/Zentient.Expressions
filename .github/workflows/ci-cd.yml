@@ -112,54 +112,39 @@ jobs:
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION }}
 
-      - name: Determine package version
-        id: pkgver
+      - name: Install GitVersion
+        uses: GitTools/actions/gitversion/setup@v0.9.14
+        with:
+          versionSpec: '5.x'
+
+      - name: Run GitVersion
+        id: gitversion
+        uses: GitTools/actions/gitversion/execute@v0.9.14
+
+      - name: Persist computed version
         run: |
           set -euo pipefail
-          echo "DEBUG: determining package version (grep limited to src/)"
+          echo "GitVersion outputs:"
+          echo "  SemVer: ${{ steps.gitversion.outputs.SemVer }}"
+          echo "  NuGetVersionV2: ${{ steps.gitversion.outputs.NuGetVersionV2 }}"
+          ver=${{ steps.gitversion.outputs.NuGetVersionV2 }}
+          # Fallback to SemVer if NuGetVersionV2 not available
+          if [ -z "$ver" ]; then ver=${{ steps.gitversion.outputs.SemVer }}; fi
+          echo "$ver" | tr -d '\r' > version.txt
+          echo "Written version.txt:"; cat version.txt
+
+      - name: Verify version consistency (optional)
+        run: |
+          set -euo pipefail
+          ver=$(cat version.txt)
+          echo "Using version: $ver"
+          # If this run was triggered by a tag, ensure tag version matches GitVersion
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             tag=${GITHUB_REF#refs/tags/}
-            ver=${tag#v}
-            echo "DEBUG: detected tag -> ver=$ver"
-          elif [[ "${{ github.ref }}" == refs/heads/release/* ]]; then
-            # Branch-based prerelease, e.g. release/alfa, release/beta, release/rc
-            prerelease_label=${GITHUB_REF#refs/heads/release/}
-            echo "DEBUG: detected release branch -> label=$prerelease_label"
-            # Search only inside src/ for VersionPrefix to avoid matching README/workflow files
-            raw=$(grep -R -m1 "<VersionPrefix>" src || true)
-            echo "DEBUG: raw grep result: '$raw'"
-            if [ -n "$raw" ]; then
-              extracted=$(echo "$raw" | sed -E 's/.*<VersionPrefix>([^<]+)<\/VersionPrefix>.*/\1/')
-              echo "DEBUG: sed extracted: '$extracted'"
-              base="$extracted"
-            else
-              base="0.0.0"
-              echo "DEBUG: no VersionPrefix found in src/, defaulting to $base"
+            if [[ "$tag" != "$ver" && "$tag" != "v$ver" ]]; then
+              echo "Tag ($tag) does not match computed version ($ver)"; exit 1
             fi
-            shortsha=$(git rev-parse --short=8 HEAD)
-            date=$(date -u +%Y%m%d%H%M)
-            ver="${base}-${prerelease_label}.ci.${date}.${shortsha}"
-            echo "DEBUG: composed prerelease ver=$ver"
-          else
-            # Search only inside src/ for VersionPrefix to avoid matching README/workflow files
-            raw=$(grep -R -m1 "<VersionPrefix>" src || true)
-            echo "DEBUG: raw grep result: '$raw'"
-            if [ -n "$raw" ]; then
-              extracted=$(echo "$raw" | sed -E 's/.*<VersionPrefix>([^<]+)<\/VersionPrefix>.*/\1/')
-              echo "DEBUG: sed extracted: '$extracted'"
-              ver="$extracted"
-            else
-              ver="0.0.0"
-              echo "DEBUG: no VersionPrefix found in src/, defaulting to $ver"
-            fi
-            shortsha=$(git rev-parse --short=8 HEAD)
-            date=$(date -u +%Y%m%d%H%M)
-            ver="${ver}-ci.${date}.${shortsha}"
-            echo "DEBUG: composed ver=$ver"
           fi
-          ver=$(printf "%s" "$ver" | tr -d '\r')
-          echo "$ver" > version.txt
-          echo "DEBUG: written version.txt contents:"; cat version.txt
 
       - name: Create artifacts dir
         run: mkdir -p artifacts
@@ -170,18 +155,26 @@ jobs:
           echo "Building solution before packing to ensure artifacts exist"
           dotnet build ${{ env.SOLUTION }} -c Release
 
-      - name: Pack solution (include symbols and sources)
+      - name: Pack projects (use GitVersion-generated version)
         run: |
           set -euo pipefail
-          ver=$(tr -d '\r\n' < version.txt)
-          echo "Packing with PackageVersion=$ver"
+          # Normalize version to a valid SemVer token (strip noise/concatenation)
+          ver_raw=$(tr -d '\r\n' < version.txt)
+          echo "Raw version: '$ver_raw'"
+          ver_norm=$(echo "$ver_raw" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(?:[-+A-Za-z0-9.]+)?' | head -n1 || true)
+          if [ -n "$ver_norm" ]; then
+            ver="$ver_norm"
+          else
+            ver="$ver_raw"
+          fi
+          echo "Using normalized version: '$ver'"
+          echo "$ver" > version.txt
+
           mkdir -p artifacts
-          # Pack each packable project under src/ individually to avoid solution-level version composition issues
           failed=0
           for proj in $(git ls-files 'src/**/*.csproj' 'src/*.csproj'); do
             if grep -q '<IsPackable>true</IsPackable>' "$proj"; then
               echo "Packing project: $proj with Version: '$ver'."
-              # Clear VersionPrefix to avoid MSBuild combining values and explicitly set Version/PackageVersion
               dotnet pack "$proj" -c Release -p:Version="$ver" -p:PackageVersion="$ver" -p:VersionPrefix= --include-symbols --include-source -o artifacts || { echo "Pack failed for $proj"; failed=1; }
             else
               echo "Skipping non-packable project: $proj"
