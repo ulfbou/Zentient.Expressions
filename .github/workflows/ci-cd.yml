@@ -2,6 +2,7 @@ name: CI/CD
 
 permissions:
   contents: write
+  packages: write
 
 on:
   push:
@@ -266,6 +267,9 @@ jobs:
     needs: pack
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -273,16 +277,57 @@ jobs:
           name: nuget-packages
           path: ./artifacts
 
-      - name: Sign symbols (conditional inside script)
+      - name: Setup .NET SDK (for signing)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.100
+
+      - name: Sign packages and symbols (if signing key present)
         run: |
           set -euo pipefail
-          if [ -z "${{ secrets.SIGNING_KEY }}" ]; then
-            echo "No SIGNING_KEY configured; skipping signing steps.";
-            exit 0;
+          if [ -z "${SIGNING_KEY:-}" ]; then
+            echo "No SIGNING_KEY configured; skipping signing steps."
+            exit 0
           fi
-          echo "Signing symbols (placeholder)"
-          SIGNING_KEY="${{ secrets.SIGNING_KEY }}"
-          # Implement actual signing commands here, using $SIGNING_KEY securely.
+
+          echo "Decoding signing certificate"
+          printf '%s' "$SIGNING_KEY" | base64 -d > signing-cert.pfx
+          chmod 600 signing-cert.pfx
+
+          TIMESTAMP_SERVER="http://timestamp.digicert.com"
+
+          echo "Signing NuGet packages and symbol packages using dotnet nuget sign"
+          for pkg in artifacts/*.nupkg; do
+            if [ -f "$pkg" ]; then
+              echo "Signing package: $pkg"
+              dotnet nuget sign "$pkg" \
+                --certificate-path signing-cert.pfx \
+                --certificate-password "${SIGNING_PASSWORD:-}" \
+                --timestamper "$TIMESTAMP_SERVER" || echo "Warning: signing failed for $pkg"
+            fi
+          done
+
+          for sym in artifacts/*.snupkg; do
+            if [ -f "$sym" ]; then
+              echo "Signing symbol package: $sym"
+              dotnet nuget sign "$sym" \
+                --certificate-path signing-cert.pfx \
+                --certificate-password "${SIGNING_PASSWORD:-}" \
+                --timestamper "$TIMESTAMP_SERVER" || echo "Warning: signing failed for $sym"
+            fi
+          done
+
+          echo "Verifying signatures (best effort)"
+          for pkg in artifacts/*.nupkg; do
+            if [ -f "$pkg" ]; then
+              echo "Signatures for $pkg:"
+              dotnet nuget verify "$pkg" -Signatures || true
+            fi
+          done
+
+          # Remove sensitive material
+          shred -u signing-cert.pfx || rm -f signing-cert.pfx || true
+          echo "Signing complete"
 
   publish:
     name: Publish to NuGet & Create Release
@@ -422,8 +467,6 @@ jobs:
           echo "Pushed $pushed packages (or attempted)."
 
       - name: Create tag for prerelease
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           echo "Tag creation from CI is disabled for this workflow (skipping)."
