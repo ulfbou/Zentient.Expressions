@@ -7,7 +7,6 @@
 
     <!-- Alfa release packaging metadata (project-specific) -->
     <IsPackable>true</IsPackable>
-    <VersionPrefix>0.1.0</VersionPrefix>
     <PackageId>Zentient.Abstractions.Expressions</PackageId>
     <Description>Provisional abstractions for Zentient.Expressions. Will be consolidated into Zentient.Abstractions in a future release.</Description>
     <PackageDescription>Provisional abstractions for Zentient.Expressions. Will be consolidated into Zentient.Abstractions in a future release.</PackageDescription>
