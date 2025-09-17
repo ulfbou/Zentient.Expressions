@@ -143,10 +143,25 @@ jobs:
           set -euo pipefail
           ver=${{ steps.set_version.outputs.version }}
           tag=${GITHUB_REF#refs/tags/}
+          
           echo "Computed version: $ver, tag: $tag"
-          if [[ "$tag" != "$ver" && "$tag" != "v$ver" ]]; then
-            echo "Tag ($tag) does not match computed version ($ver). Aborting to avoid accidental publish."; exit 1
+          
+          # This regex matches a valid SemVer with an optional 'v' prefix
+          # It now correctly handles prerelease labels like alpha and beta
+          if [[ ! "$tag" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+(\.[0-9]+)?)?$ ]]; then
+            echo "Error: Git tag ($tag) is not a valid Semantic Version."
+            exit 1
           fi
+
+          # Strip the 'v' from the tag for comparison
+          tag_no_v=$(echo "$tag" | sed 's/^v//')
+          
+          if [[ "$tag_no_v" != "$ver" ]]; then
+            echo "Tag ($tag) does not match computed version ($ver). Aborting to avoid accidental publish."
+            exit 1
+          fi
+          
+          echo "Version consistency verified. Tag ($tag) matches computed version ($ver)."
 
       - name: Create artifacts dir
         run: mkdir -p artifacts
