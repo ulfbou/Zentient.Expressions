@@ -176,17 +176,22 @@ jobs:
         run: |
           set -euo pipefail
           set -x
+          # Read raw computed version (may include prerelease suffix like -alfa.1)
           ver_raw=$(tr -d '\r\n' < version.txt)
-          ver_norm=$(echo "$ver_raw" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(?:[-+A-Za-z0-9.]+)?' | head -n1 || true)
-          if [ -n "$ver_norm" ]; then ver="$ver_norm"; else ver="$ver_raw"; fi
+
+          # Use the raw version (keep prerelease suffix intact) for PackageVersion
+          ver="$ver_raw"
+          echo "Using full version for packaging: $ver"
           echo "$ver" > version.txt
+
+          # Derive VersionPrefix (base X.Y.Z) from the version for VersionPrefix
           base_ver=$(echo "$ver" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || true)
           if [ -z "$base_ver" ]; then echo "ERROR: Failed to extract base version"; exit 1; fi
 
           failed=0
           for proj in $(git ls-files 'src/**/*.csproj' 'src/*.csproj'); do
             if grep -q '<IsPackable>true</IsPackable>' "$proj"; then
-              echo "Packing $proj"
+              echo "Packing $proj with Version=$ver"
               dotnet pack "$proj" -c Release -o artifacts -p:Version="$ver" -p:PackageVersion="$ver" -p:VersionPrefix="$base_ver" --include-symbols --include-source || { echo "Pack failed for $proj"; failed=1; }
             else
               echo "Skipping non-packable $proj"
